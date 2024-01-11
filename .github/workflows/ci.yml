@@ -1,0 +1,46 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  deploy-to-aks:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        run: |
+            mkdir ${HOME}/.kube
+            echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
+
+      - name: Use AKS context
+        run: kubectl config use-context aks-Microblog1
+
+      - uses: cschleiden/replace-tokens@v1
+        with:
+          files: '["infrastructure/kubernetes/deployment_manifests/*-deployment.yml"]'
+          tokenPrefix: __
+          tokenSuffix: __
+        env:
+          CONNECTION_URL: ${{ secrets.DB_CONNECTION_URL }}
+          IMAGE_TAG: ${{ github.run_number }}
+
+      - name: Deploy to AKS
+        run: |
+          chmod +x infrastructure/kubernetes/deployment_manifests/github_deployment.sh
+          ./infrastructure/kubernetes/deployment_manifests/github_deployment.sh
