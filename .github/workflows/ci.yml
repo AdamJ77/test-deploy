@@ -38,7 +38,8 @@ jobs:
           tokenSuffix: __
         env:
           CONNECTION_URL: ${{ secrets.DB_CONNECTION_URL }}
-          IMAGE_TAG: ${{ github.run_number }}
+          IMAGE_TAG: 179
+          DOCKERHUB_LOGIN: ${{ secrets.DOCKERHUB_LOGIN }}
 
       - name: Deploy to AKS
         run: |
